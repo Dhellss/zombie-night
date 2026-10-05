@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Zombie Night</title>
+<meta name="description" content="A small top-down zombie survival game. Survive the night.">
+<meta name="theme-color" content="#07090b">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game" aria-label="Zombie Night game view"></canvas>
+
+<!-- HUD: a handful of elements, updated only when their values change -->
+<div id="hud" class="hidden">
+  <div class="hud-corner hud-tl">
+    <div class="hud-wave">WAVE <span id="hud-wave">01</span></div>
+    <div class="hud-sub">ZOMBIES: <span id="hud-zombies">0</span></div>
+  </div>
+  <div class="hud-corner hud-tr">
+    <div class="hud-coins"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#d9a441"/><circle cx="8" cy="8" r="4" fill="none" stroke="#8a6420" stroke-width="1.4"/></svg><span id="hud-coins">0</span></div>
+  </div>
+  <div class="hud-corner hud-bl">
+    <svg class="ico ico-lg" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.2 2.3 8.6A3.4 3.4 0 0 1 8 4.1a3.4 3.4 0 0 1 5.7 4.5Z" fill="#c23a2e"/></svg>
+    <div class="hp">
+      <div class="hp-bar"><div id="hud-hpfill"></div></div>
+      <div class="hp-text"><span id="hud-hp">100</span> / <span id="hud-hpmax">100</span></div>
+    </div>
+  </div>
+  <div class="hud-corner hud-br">
+    <div id="hud-reload" class="hud-reload hidden">RELOADING</div>
+    <div class="ammo">
+      <svg class="ico ico-lg" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 6.5V3.2C6 1.9 7 1 8 1s2 .9 2 2.2v3.3Z" fill="#c9a25a"/><rect x="6" y="7.3" width="4" height="7.7" fill="#b98a3e"/></svg>
+      <span id="hud-mag" class="mag">12</span><span class="sep">/</span><span id="hud-reserve">60</span>
+    </div>
+  </div>
+  <button id="touch-reload" class="touch-btn touch-reload" data-action="touch-reload">R</button>
+  <button id="touch-pause" class="touch-btn touch-pause" data-action="pause">II</button>
+</div>
+
+<!-- MAIN MENU -->
+<section id="screen-menu" class="screen">
+  <div class="band">
+    <h1 class="title">ZOMBIE <span>NIGHT</span></h1>
+    <p class="tagline">SURVIVE THE NIGHT</p>
+    <div class="buttons">
+      <button class="btn primary" data-action="start">START GAME</button>
+    </div>
+    <p class="stat">BEST WAVE: <b id="menu-best">0</b></p>
+    <div class="buttons">
+      <button class="btn" data-action="settings">SETTINGS</button>
+    </div>
+    <p class="hint">WASD move &middot; Mouse aim &middot; Click shoot &middot; R reload &middot; Esc pause</p>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="screen-settings" class="screen">
+  <div class="band">
+    <h2 class="heading">SETTINGS</h2>
+    <div class="toggles">
+      <button class="toggle" data-action="toggle-sound">SOUND <b id="set-sound">ON</b></button>
+      <button class="toggle" data-action="toggle-music">MUSIC <b id="set-music">ON</b></button>
+      <button class="toggle" data-action="toggle-shake">SCREEN SHAKE <b id="set-shake">ON</b></button>
+    </div>
+    <div class="buttons">
+      <button class="btn" data-action="settings-back">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE A WAVE -->
+<section id="screen-prewave" class="screen">
+  <div class="band">
+    <p class="kicker">NIGHT <span id="pre-night">01</span></p>
+    <h2 class="heading big">WAVE <span id="pre-wave">1</span></h2>
+    <p class="tagline">GET READY</p>
+    <p class="note" id="pre-note"></p>
+    <div class="buttons">
+      <button class="btn primary" data-action="begin-wave">START</button>
+    </div>
+  </div>
+</section>
+
+<!-- AFTER A WAVE -->
+<section id="screen-cleared" class="screen">
+  <div class="band">
+    <h2 class="heading big">WAVE CLEARED</h2>
+    <p class="reward">+<span id="clr-coins">0</span> COINS</p>
+    <p class="stat">ZOMBIES KILLED: <b id="clr-kills">0</b></p>
+    <p class="note" id="clr-note"></p>
+    <div class="buttons">
+      <button class="btn" data-action="upgrades">UPGRADES</button>
+      <button class="btn primary" data-action="next-wave">NEXT WAVE</button>
+    </div>
+  </div>
+</section>
+
+<!-- UPGRADES -->
+<section id="screen-upgrades" class="screen">
+  <div class="band band-wide">
+    <div class="upg-head">
+      <h2 class="heading">UPGRADES</h2>
+      <p class="upg-coins">COINS: <b id="upg-coins">0</b></p>
+    </div>
+    <div id="upg-list" class="upg-list"></div>
+    <div class="buttons">
+      <button class="btn" data-action="upgrades-back">BACK</button>
+      <button class="btn primary" data-action="next-wave">NEXT WAVE</button>
+    </div>
+  </div>
+</section>
+
+<!-- PAUSE -->
+<section id="screen-pause" class="screen">
+  <div class="band">
+    <h2 class="heading big">PAUSED</h2>
+    <div class="buttons stack">
+      <button class="btn primary" data-action="resume">RESUME</button>
+      <button class="btn" data-action="settings">SETTINGS</button>
+      <button class="btn" data-action="quit">MAIN MENU</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAME OVER -->
+<section id="screen-gameover" class="screen">
+  <div class="band">
+    <h2 class="heading big dead">YOU DIED</h2>
+    <p class="kicker">NIGHT <span id="go-night">01</span></p>
+    <p class="kicker">WAVE <span id="go-wave">1</span></p>
+    <p class="stat">ZOMBIES KILLED: <b id="go-kills">0</b></p>
+    <p class="stat">BEST WAVE: <b id="go-best">0</b> <span id="go-newbest" class="newbest hidden">NEW BEST</span></p>
+    <div class="buttons">
+      <button class="btn primary" data-action="retry">TRY AGAIN</button>
+      <button class="btn" data-action="quit">MAIN MENU</button>
+    </div>
+  </div>
+</section>
+
+<script src="game.js"></script>
+</body>
+</html>
